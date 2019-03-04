@@ -44,7 +44,7 @@ local function create(attacking_unit, target_unit, result, callback)
 
         for index = 1, targets_count_to_display_before do
           local will_explode = result.target_unit.count == 0 or index <= targets_losses_to_display
-          local target       = spawn_target_unit(self, index, target_unit, will_explode)
+          local target       = spawn_target_unit(self, index, target_unit, will_explode, attacking_unit)
           table.insert(self.targets, target)
         end
       end,
@@ -361,7 +361,7 @@ function spawn_attacking_unit(cinematic, index, attacking_unit, will_explode)
 end
 
 
-function spawn_target_unit(cinematic, index, target_unit, is_destroyed)
+function spawn_target_unit(cinematic, index, target_unit, is_destroyed, attacking_unit)
   return lua_fsm.create({
     initial = "moving",
     events = {
@@ -389,7 +389,7 @@ function spawn_target_unit(cinematic, index, target_unit, is_destroyed)
         self.moving_countdown = self.animations.target_positions[index].moving_countdown
         self.weapon           = target_unit.unit_type_id == "recon" and "submachine_gun" or (0 < target_unit.ammo and "cannon" or "submachine_gun")
         self.animation        = "idling"
-        self.will_retaliate   = target_unit.unit_type_id ~= "artillery"
+        self.will_retaliate   = target_unit.unit_type_id ~= "artillery" and attacking_unit.unit_type_id ~= "artillery"
         self.frame            = 1
         self.idling_countdown = 2.2
         self.exploded         = false
