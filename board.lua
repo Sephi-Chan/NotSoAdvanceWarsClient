@@ -89,6 +89,35 @@ function Board.available_tiles_around(game, tile, radius)
 end
 
 
+function Board.movable_tiles_around(game, tile, radius)
+  local radius = radius or 1
+  local ox, oy = tile[1], tile[2]
+  local candidate_tiles = {}
+  local i = 1
+  local tiles_count_in_column = 1
+
+  for x = ox - radius, ox + radius do
+    local from_y = oy - (tiles_count_in_column - 1)/2
+    local to_y   = oy + (tiles_count_in_column - 1)/2
+
+    for y = from_y, to_y do
+      table.insert(candidate_tiles, { x, y })
+    end
+
+    if i <= radius then
+      tiles_count_in_column = tiles_count_in_column + 2
+    else
+      tiles_count_in_column = tiles_count_in_column - 2
+    end
+
+    i = i + 1
+  end
+
+  local onboard_tiles = Board.filter_offboard_tiles(game.map, candidate_tiles)
+  return Board.filter_units_and_buildings_tiles(game, onboard_tiles)
+end
+
+
 function Board.attackable_tiles_around(game, attacking_player, unit)
   local radius = unit_types[unit.unit_type_id].range
   local x, y = unit.x, unit.y

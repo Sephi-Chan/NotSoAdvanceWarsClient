@@ -157,7 +157,7 @@ function create()
           else
             local radius = unit_types[self.data.acting_unit.unit_type_id].move
             self.current = "waiting_move_destination"
-            self.data.available_tiles = board.available_tiles_around(self.data.game, {x, y}, radius)
+            self.data.available_tiles = board.movable_tiles_around(self.data.game, {x, y}, radius)
           end
         end,
 
