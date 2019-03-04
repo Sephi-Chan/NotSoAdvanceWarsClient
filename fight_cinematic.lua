@@ -177,7 +177,7 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
 
 
       on_keep_moving = function(self, event, from, to, delta)
-        animate(self, delta)
+        animate_unit(self, delta)
         self.x = self.moving and self.x + 50 * delta or self.x
         self.moving_countdown = self.moving_countdown - delta
         if self.moving_countdown < 0 then self.brake() end
@@ -193,7 +193,7 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
 
 
       on_keep_braking = function(self, event, from, to, delta)
-        animate(self, delta)
+        animate_unit(self, delta)
         self.braking_countdown = self.braking_countdown - delta
         if self.braking_countdown < 0 then self.idle(delta) end
       end,
@@ -226,7 +226,7 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
 
 
       on_keep_firing = function(self, event, from, to, delta)
-        animate(self, delta)
+        animate_unit(self, delta)
         self.firing_countdown = self.firing_countdown - delta
         if self.firing_countdown < 0 then self.cease_fire(delta) end
       end,
@@ -248,7 +248,6 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
       on_draw = function(self, event, from, to)
         self.current = from
         lg.setColor(1, 1, 1)
-        print(self.id, self.animation, self.frame)
         lg.draw(self.animations.sprite, self.animations[self.animation][self.frame], self.x, self.y, 0, 2, 2)
       end
     }
@@ -367,7 +366,7 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
 end
 
 
-function animate(fsm, delta)
+function animate_unit(fsm, delta)
   fsm.frame_countdown = fsm.frame_countdown - delta
   if fsm.frame_countdown < 0 then
     fsm.frame_countdown = 0

@@ -29,14 +29,12 @@ function Game.apply_fight_result(fsm, result)
 
   if attacking_unit.count == 0 then
     game.units[ax .. "_" .. ay] = nil
-    fsm.data.ui.anims[attacking_unit.id] = nil
   else
     game.units[ax .. "_" .. ay] = attacking_unit
   end
 
   if target_unit.count == 0 then
     game.units[tx .. "_" .. ty] = nil
-    fsm.data.ui.anims[target_unit.id] = nil
   else
     game.units[tx .. "_" .. ty] = target_unit
   end

@@ -6,12 +6,12 @@ lg           = love.graphics
 font         = lg.newFont(12); lg.setFont(font)
 arrow_cursor = love.mouse.getSystemCursor("arrow")
 hand_cursor  = love.mouse.getSystemCursor("hand")
-server_ip    = "192.168.1.12" or "163.172.97.119"
+env          = "dev"
+server_ip    = env == "dev" and "192.168.1.12" or "163.172.97.119"
 
 socket     = require("socket")
 json       = require("lib/json")
 lua_fsm    = require("lib/fsm")
-uuid       = require("lib/uuid"); uuid.seed()
 unit_types = require("data/unit_types")
 animations = require("data/animations")
 sound_box  = require("lib/sound_box")
@@ -21,8 +21,9 @@ sound_box.register_sound("submachine_gun", "assets/mp5.wav")
 sound_box.register_sound("cannon",         "assets/cannon.wav")
 sound_box.register_sound("horn",           "assets/horn.wav")
 
-main_menu   = require("main_menu")
-game_screen = require("game_screen")
+main_menu       = require("main_menu")
+game_screen     = require("game_screen")
+fight_cinematic = require("fight_cinematic")
 
 self_color  = { 51/255, 102/255, 255/255 }
 error_color = { 1, 0, 0 }
@@ -39,7 +40,7 @@ local app = lua_fsm.create({
   events = {
     { name = "startup",              from = "none",             to = "main_menu" },
     { name = "display_main_menu",    from = "game_screen",      to = "main_menu" },
-    { name = "display_main_menu",    from = "main_menu",      to = "main_menu" },
+    { name = "display_main_menu",    from = "main_menu",        to = "main_menu" },
     { name = "display_game_screen",  from = "main_menu",        to = "game_screen" },
     { name = "display_game_screen",  from = "cinematic_screen", to = "game_screen" },
     { name = "play_fight_cinematic", from = "game_screen",      to = "cinematic_screen"}
@@ -73,8 +74,6 @@ local app = lua_fsm.create({
         self.data.callbacks = previous_callbacks
       end
 
-      local fight_cinematic = require("fight_cinematic")
-
       self.data.fsm       = fight_cinematic.create(attacking_unit, target_unit, result, callback)
       self.data.callbacks = fight_cinematic.callbacks
     end,
@@ -97,12 +96,14 @@ end
 
 
 function love.update(delta)
+  -- print("love update")
   app.data.callbacks.update(app.data.fsm, delta)
   connect_or_poll_server(network, app.data.player_id, delta, app.data.callbacks.event_received)
 end
 
 
 function love.draw()
+  -- print("love draw")
   lg.setLineWidth(1)
   lg.setLineStyle("rough")
 

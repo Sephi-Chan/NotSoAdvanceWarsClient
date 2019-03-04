@@ -41,13 +41,10 @@ function create()
             game = game,
             ui = {
               moving_units = {},
-              anims = build_anims(
-                game.units,
-                {
-                  player_1_headquarter = {frame = 1, frames = 2, frame_countdown = math.random(), frame_duration = 0.5},
-                  player_2_headquarter = {frame = 1, frames = 2, frame_countdown = math.random(), frame_duration = 0.5}
-                }
-              ),
+              anims = {
+                player_1_headquarter = {frame = 1, frames = 2, frame_countdown = math.random(), frame_duration = 0.5},
+                player_2_headquarter = {frame = 1, frames = 2, frame_countdown = math.random(), frame_duration = 0.5}
+              },
               hover = {},
               board_box = {
                 x = math.floor((800 - (game.map.columns * board.tile_side)) / 2),
@@ -139,7 +136,6 @@ function create()
             self.data.game.players[self.data.whoami].gold = gold
           end
           self.data.game.units[unit.x .. "_" .. unit.y] = unit
-          self.data.ui.anims[unit.id] = {frame = 1, frames = 3, frame_countdown = math.random(), frame_duration = 0.5}
           self.current = from
         end,
 
@@ -237,8 +233,29 @@ end
 
 
 function callbacks.update(fsm, delta)
-  update_animations_frame(fsm.data.ui.anims, delta)
-  update_moving_units(fsm, fsm.data.ui.moving_units, fsm.data.ui.anims, delta)
+  animate_units(fsm.data.game.units, delta)
+  animate_buildings(fsm.data.ui.anims, delta)
+  update_moving_units(fsm, fsm.data.ui.moving_units, delta)
+end
+
+
+function animate_units(units, delta)
+  for _, unit in pairs(units) do
+    unit.animation       = unit.animation or "map_idle"
+    unit.frame           = unit.frame or 1
+    unit.frame_duration  = unit.frame_duration or 0.2
+    unit.frame_countdown = unit.frame_countdown or unit.frame_duration
+
+    unit.frame_countdown = unit.frame_countdown - delta
+    if unit.frame_countdown <= 0 then
+      unit.frame_countdown = unit.frame_duration
+      unit.frame = unit.frame + 1
+
+      if unit.frame > #animations[unit.owner][unit.unit_type_id][unit.animation] then
+        unit.frame = 1
+      end
+    end
+  end
 end
 
 
@@ -270,7 +287,7 @@ function update_unit_action_box(fsm, unit, box)
 end
 
 
-function update_animations_frame(anims, delta)
+function animate_buildings(anims, delta)
   for id, anim in pairs(anims) do
     anim.frame_countdown = anim.frame_countdown - delta
     if anim.frame_countdown <= 0 then
@@ -285,7 +302,7 @@ function update_animations_frame(anims, delta)
 end
 
 
-function update_moving_units(fsm, moving_units, anims, delta)
+function update_moving_units(fsm, moving_units, delta)
   for _, unit in pairs(fsm.data.game.units) do
     if moving_units[unit.id] then
       local data = moving_units[unit.id]
@@ -303,38 +320,50 @@ function update_moving_units(fsm, moving_units, anims, delta)
         local direction = get_direction(last_step, next_step)
 
         if direction == "right" then
+          unit.animation = "map_right"
           if unit.step_shift_x < 32 then
             unit.step_shift_x = unit.step_shift_x + speed * delta
             unit.shift_x = unit.shift_x + speed * delta
           else
             unit.step_shift_x = 0
             data.current = data.current + 1
+            unit.frame = 1
           end
+
         elseif direction == "down" then
+          unit.animation = "map_down"
           if unit.step_shift_y < 32 then
             unit.step_shift_y = unit.step_shift_y + speed * delta
             unit.shift_y = unit.shift_y + speed * delta
           else
             unit.step_shift_y = 0
             data.current = data.current + 1
+            unit.frame = 1
           end
+
         elseif direction == "left" then
+          unit.animation = "map_left"
           if unit.step_shift_x > -32 then
             unit.step_shift_x = unit.step_shift_x - speed * delta
             unit.shift_x = unit.shift_x - speed * delta
           else
             unit.step_shift_x = 0
             data.current = data.current + 1
+            unit.frame = 1
           end
+
         elseif direction == "up" then
+          unit.animation = "map_up"
           if unit.step_shift_y > -32 then
             unit.step_shift_y = unit.step_shift_y - speed * delta
             unit.shift_y = unit.shift_y - speed * delta
           else
             unit.step_shift_y = 0
             data.current = data.current + 1
+            unit.frame = 1
           end
         end
+
       else
         -- Arrival!
         origin = data.path[1]
@@ -346,6 +375,7 @@ function update_moving_units(fsm, moving_units, anims, delta)
         moving_units[unit.id] = nil
         fsm.data.game.units[origin.x .. "_" .. origin.y] = nil
         fsm.data.game.units[unit.x .. "_" .. unit.y] = unit
+        unit.animation = "map_idle"
       end
     end
   end
@@ -470,15 +500,23 @@ end
 
 function draw_units(fsm, units, board_box)
   for _, unit in pairs(units) do
+    if unit.animation == nil then break end
+
     local tx, ty = board.coords_of(unit.x, unit.y)
-    local frame = fsm.data.ui.anims[unit.id].frame
-    local quad = board[unit.owner .. "_" .. unit.unit_type_id][frame]
-    local done = unit.moved and unit.fired
+    local sprite = animations[unit.owner][unit.unit_type_id].map_sprite
+    local quad   = animations[unit.owner][unit.unit_type_id][unit.animation][unit.frame]
+    local done   = unit.moved and unit.fired
     local x = math.floor(board_box.x + tx + (unit.shift_x or 0))
     local y = math.floor(board_box.y + ty + (unit.shift_y or 0))
 
     lg.setColor(done and {0.5, 0.5, 0.5} or {1, 1, 1})
-    lg.draw(board.sprite, quad, x, y, 0, scale, scale)
+    if quad then
+      lg.draw(sprite, quad, x, y, 0, scale, scale)
+    else
+      -- FIXME: How can unit frame go too high despite the frame check in animate_units?
+      -- Bug noticed with artillery when going upright.
+      print("FAIL: No quad for", tostring(unit.owner), tostring(unit.unit_type_id), tostring(unit.animation), tostring(unit.frame))
+    end
 
     if unit.count < 10 then
       local rw, rh = 10, 14
@@ -871,34 +909,22 @@ end
 
 function build_shop_box(box, unit_types)
   local children = {}
-  local i = 1
-
   for i, id in ipairs({"recon", "tank", "medium_tank", "artillery"}) do
     local unit_type = unit_types[id]
     children[id] = {
       x = box.x + 5,
-      y = box.y + 5 + (i - 1) * 30,
+      y = box.y + 5 + (i-1) * 30,
       width = box.width - 10,
       height = 25,
       label = unit_type.name,
       cost = unit_type.cost
     }
-    i = i + 1
   end
 
   box.height = 5 + utils.count(unit_types) * 30
   box.children = children
 
   return box
-end
-
-
-function build_anims(units, other_anims)
-  local anims = other_anims
-  for _, unit in pairs(units) do
-    anims[unit.id] = {frame = 1, frames = 3, frame_countdown = math.random(), frame_duration = 0.5}
-  end
-  return anims
 end
 
 

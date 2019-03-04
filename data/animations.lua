@@ -2,15 +2,25 @@ lg.setDefaultFilter("nearest", "nearest")
 
 
 local sprites = {
-  red_recon       = lg.newImage("assets/red_recon.png"),
-  red_tank        = lg.newImage("assets/red_tank.png"),
-  red_medium_tank = lg.newImage("assets/red_medium_tank.png"),
-  red_artillery   = lg.newImage("assets/red_artillery.png"),
-  map_red_medium_tank = lg.newImage("assets/map_red_medium_tank.png"),
+  red_recon           = lg.newImage("assets/red_recon.png"),
+  red_tank            = lg.newImage("assets/red_tank.png"),
+  red_medium_tank     = lg.newImage("assets/red_medium_tank.png"),
+  red_artillery       = lg.newImage("assets/red_artillery.png"),
 
-  blue_recon       = lg.newImage("assets/blue_recon.png"),
-  blue_tank        = lg.newImage("assets/blue_tank.png"),
-  blue_medium_tank = lg.newImage("assets/blue_medium_tank.png"),
+  map_red_recon       = lg.newImage("assets/map_red_recon.png"),
+  map_red_tank        = lg.newImage("assets/map_red_tank.png"),
+  map_red_medium_tank = lg.newImage("assets/map_red_medium_tank.png"),
+  map_red_artillery   = lg.newImage("assets/map_red_artillery.png"),
+
+  blue_recon           = lg.newImage("assets/blue_recon.png"),
+  blue_tank            = lg.newImage("assets/blue_tank.png"),
+  blue_medium_tank     = lg.newImage("assets/blue_medium_tank.png"),
+  blue_artillery       = lg.newImage("assets/blue_artillery.png"),
+
+  map_blue_recon       = lg.newImage("assets/map_blue_recon.png"),
+  map_blue_tank        = lg.newImage("assets/map_blue_tank.png"),
+  map_blue_medium_tank = lg.newImage("assets/map_blue_medium_tank.png"),
+  map_blue_artillery   = lg.newImage("assets/map_blue_artillery.png"),
 
   plain_large = lg.newImage("assets/plain_large.png"),
 
@@ -72,11 +82,37 @@ local animations = {
         lg.newQuad( 896, 0, 64, 64, sprites.red_recon:getDimensions()),
         lg.newQuad( 960, 0, 64, 64, sprites.red_recon:getDimensions()),
         lg.newQuad(1024, 0, 64, 64, sprites.red_recon:getDimensions())
+      },
+      map_down = {
+        lg.newQuad( 0, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(16, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(32, 0, 16, 16, sprites.map_red_recon:getDimensions())
+      },
+      map_up = {
+        lg.newQuad(48, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(64, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(80, 0, 16, 16, sprites.map_red_recon:getDimensions())
+      },
+      map_right = {
+        lg.newQuad( 96, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(112, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(128, 0, 16, 16, sprites.map_red_recon:getDimensions())
+      },
+      map_idle = {
+        lg.newQuad(144, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(160, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(176, 0, 16, 16, sprites.map_red_recon:getDimensions())
+      },
+      map_left = {
+        lg.newQuad(192, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(208, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(224, 0, 16, 16, sprites.map_red_recon:getDimensions())
       }
     },
 
     tank = {
       sprite = sprites.red_tank,
+      map_sprite = sprites.map_red_tank,
       attacking_positions = {
         { x = -10, y = 160, moving_countdown = 0.8 },
         { x =  70, y = 200, moving_countdown = 1.1 },
@@ -120,6 +156,32 @@ local animations = {
         lg.newQuad(2048, 0, 64, 64, sprites.red_tank:getDimensions()),
         lg.newQuad(2176, 0, 64, 64, sprites.red_tank:getDimensions()),
         lg.newQuad(2304, 0, 64, 64, sprites.red_tank:getDimensions())
+      },
+      map_down = {
+        lg.newQuad( 0, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(16, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(32, 0, 16, 16, sprites.map_red_tank:getDimensions())
+      },
+      map_up = {
+        lg.newQuad(48, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(64, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(80, 0, 16, 16, sprites.map_red_tank:getDimensions())
+      },
+      map_right = {
+        lg.newQuad( 96, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(112, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(128, 0, 16, 16, sprites.map_red_tank:getDimensions())
+      },
+      map_idle = {
+        lg.newQuad(144, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(160, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(176, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(192, 0, 16, 16, sprites.map_red_tank:getDimensions())
+      },
+      map_left = {
+        lg.newQuad(208, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(224, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(240, 0, 16, 16, sprites.map_red_tank:getDimensions())
       }
     },
 
@@ -172,26 +234,29 @@ local animations = {
         lg.newQuad(2432, 0, 128, 64, sprites.red_medium_tank:getDimensions()),
         lg.newQuad(2560, 0, 128, 64, sprites.red_medium_tank:getDimensions())
       },
-      down = {
-        lg.newQuad( 0, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(20, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(40, 0, 20, 20, sprites.map_red_medium_tank:getDimensions())
+      map_down = {
+        lg.newQuad( 0, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(16, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(32, 0, 16, 16, sprites.map_red_medium_tank:getDimensions())
       },
-      up = {
-        lg.newQuad( 60, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad( 80, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(100, 0, 20, 20, sprites.map_red_medium_tank:getDimensions())
+      map_up = {
+        lg.newQuad(48, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(64, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(80, 0, 16, 16, sprites.map_red_medium_tank:getDimensions())
       },
-      left = {
-        lg.newQuad(120, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(140, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(160, 0, 20, 20, sprites.map_red_medium_tank:getDimensions())
+      map_right = {
+        lg.newQuad( 96, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(112, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
       },
-      idle = {
-        lg.newQuad(180, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(200, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(220, 0, 20, 20, sprites.map_red_medium_tank:getDimensions()),
-        lg.newQuad(240, 0, 20, 20, sprites.map_red_medium_tank:getDimensions())
+      map_idle = {
+        lg.newQuad(128, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(144, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(160, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(176, 0, 16, 16, sprites.map_red_medium_tank:getDimensions())
+      },
+      map_left = {
+        lg.newQuad(192, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(208, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
       }
     },
 
@@ -230,6 +295,32 @@ local animations = {
         lg.newQuad(768, 0, 128, 128, sprites.red_artillery:getDimensions()),
         lg.newQuad(896, 0, 128, 128, sprites.red_artillery:getDimensions())
       },
+      map_down = {
+        lg.newQuad( 0, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(16, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(32, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      },
+      map_up = {
+        lg.newQuad(48, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(64, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(80, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      },
+      map_right = {
+        lg.newQuad( 96, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(112, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(128, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      },
+      map_idle = {
+        lg.newQuad(144, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(160, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(176, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(192, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      },
+      map_left = {
+        lg.newQuad(208, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(224, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(240, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      }
     }
   }
 }
@@ -246,34 +337,69 @@ animations.player_2 = {
 
   recon = {
     sprite              = sprites.blue_recon,
+    map_sprite          = sprites.map_blue_recon,
     attacking_positions = animations.player_1.recon.attacking_positions,
     target_positions    = animations.player_1.recon.target_positions,
     moving              = animations.player_1.recon.moving,
     braking             = animations.player_1.recon.braking,
     idling              = animations.player_1.recon.idling,
-    firing              = animations.player_1.recon.firing
+    firing              = animations.player_1.recon.firing,
+    map_down            = animations.player_1.recon.map_down,
+    map_up              = animations.player_1.recon.map_up,
+    map_right           = animations.player_1.recon.map_right,
+    map_idle            = animations.player_1.recon.map_idle,
+    map_left            = animations.player_1.recon.map_left
   },
 
   tank = {
     sprite              = sprites.blue_tank,
+    map_sprite          = sprites.map_blue_tank,
     attacking_positions = animations.player_1.tank.attacking_positions,
     target_positions    = animations.player_1.tank.target_positions,
     moving              = animations.player_1.tank.moving,
     braking             = animations.player_1.tank.braking,
     idling              = animations.player_1.tank.idling,
     firing              = animations.player_1.tank.firing,
-    cannoning           = animations.player_1.tank.cannoning
+    cannoning           = animations.player_1.tank.cannoning,
+    map_down            = animations.player_1.tank.map_down,
+    map_up              = animations.player_1.tank.map_up,
+    map_right           = animations.player_1.tank.map_right,
+    map_idle            = animations.player_1.tank.map_idle,
+    map_left            = animations.player_1.tank.map_left
   },
 
   medium_tank = {
     sprite              = sprites.blue_medium_tank,
+    map_sprite          = sprites.map_blue_medium_tank,
     attacking_positions = animations.player_1.medium_tank.attacking_positions,
     target_positions    = animations.player_1.medium_tank.target_positions,
     moving              = animations.player_1.medium_tank.moving,
     braking             = animations.player_1.medium_tank.braking,
     idling              = animations.player_1.medium_tank.idling,
     firing              = animations.player_1.medium_tank.firing,
-    cannoning           = animations.player_1.medium_tank.cannoning
+    cannoning           = animations.player_1.medium_tank.cannoning,
+    map_down            = animations.player_1.medium_tank.map_down,
+    map_up              = animations.player_1.medium_tank.map_up,
+    map_right           = animations.player_1.medium_tank.map_right,
+    map_idle            = animations.player_1.medium_tank.map_idle,
+    map_left            = animations.player_1.medium_tank.map_left
+  },
+
+  artillery = {
+    sprite              = sprites.blue_artillery,
+    map_sprite          = sprites.map_blue_artillery,
+    attacking_positions = animations.player_1.artillery.attacking_positions,
+    target_positions    = animations.player_1.artillery.target_positions,
+    moving              = animations.player_1.artillery.moving,
+    braking             = animations.player_1.artillery.braking,
+    idling              = animations.player_1.artillery.idling,
+    firing              = animations.player_1.artillery.firing,
+    cannoning           = animations.player_1.artillery.cannoning,
+    map_down            = animations.player_1.artillery.map_down,
+    map_up              = animations.player_1.artillery.map_up,
+    map_right           = animations.player_1.artillery.map_right,
+    map_idle            = animations.player_1.artillery.map_idle,
+    map_left            = animations.player_1.artillery.map_left
   }
 }
 
