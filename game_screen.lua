@@ -6,33 +6,31 @@ function create()
   return lua_fsm.create(
     {
       events = {
-        {name = "startup", from = "none", to = "idle|waiting_actions"},
-        {name = "end_turn", from = "*", to = "idle"},
-        {name = "turn_started", from = "*", to = "waiting_actions|idle"},
-        {name = "leave", from = "*", to = "finished"},
-        {name = "player_left", from = "*", to = "finished"},
-        {name = "hovered_tile_changed", from = "*", to = "*"},
+        {name = "startup",              from = "none", to = "idle|waiting_actions"},
+        {name = "end_turn",             from = "*",    to = "idle"},
+        {name = "turn_started",         from = "*",    to = "waiting_actions|idle"},
+        {name = "leave",                from = "*",    to = "finished"},
+        {name = "player_left",          from = "*",    to = "finished"},
+        {name = "hovered_tile_changed", from = "*",    to = "*"},
+
         -- Training new units.
-        {name = "select_building", from = "waiting_actions", to = "display_units_shop|waiting_actions"},
-        {name = "close_units_shop", from = "display_units_shop", to = "waiting_actions"},
-        {name = "select_unit_to_buy", from = "display_units_shop", to = "waiting_deployment_location"},
+        {name = "select_building",    from = "waiting_actions",             to = "display_units_shop|waiting_actions"},
+        {name = "close_units_shop",   from = "display_units_shop",          to = "waiting_actions"},
+        {name = "select_unit_to_buy", from = "display_units_shop",          to = "waiting_deployment_location"},
         {name = "cancel_unit_buying", from = "waiting_deployment_location", to = "waiting_actions"},
-        {name = "deploy_unit", from = "waiting_deployment_location", to = "waiting_actions"},
-        {name = "unit_bought", from = "*", to = "*"},
+        {name = "deploy_unit",        from = "waiting_deployment_location", to = "waiting_actions"},
+        {name = "unit_bought",        from = "*",                           to = "*"},
+
         -- Moving or attacking with units.
-        {name = "select_unit", from = "waiting_actions", to = "waiting_unit_action"},
-        {name = "cancel_unit_action", from = "waiting_unit_action", to = "waiting_actions"},
-        {
-          name = "select_unit_action",
-          from = "waiting_unit_action",
-          to = "waiting_move_destination|waiting_attack_target"
-        },
+        {name = "select_unit",        from = "waiting_actions",          to = "waiting_unit_action"},
+        {name = "cancel_unit_action", from = "waiting_unit_action",      to = "waiting_actions"},
+        {name = "select_unit_action", from = "waiting_unit_action",      to = "waiting_move_destination|waiting_attack_target"},
         {name = "cancel_unit_action", from = "waiting_move_destination", to = "waiting_actions"},
-        {name = "cancel_unit_action", from = "waiting_attack_target", to = "waiting_actions"},
-        {name = "move_unit", from = "waiting_move_destination", to = "waiting_actions"},
-        {name = "unit_moved", from = "*", to = "*"},
-        {name = "attack_unit", from = "waiting_attack_target", to = "waiting_actions"},
-        {name = "fight_ended", from = "*", to = "*|finished"}
+        {name = "cancel_unit_action", from = "waiting_attack_target",    to = "waiting_actions"},
+        {name = "move_unit",          from = "waiting_move_destination", to = "waiting_actions"},
+        {name = "unit_moved",         from = "*",                        to = "*"},
+        {name = "attack_unit",        from = "waiting_attack_target",    to = "waiting_actions"},
+        {name = "fight_ended",        from = "*",                        to = "*|finished"}
       },
       callbacks = {
         on_startup = function(self, event, from, to, app, game, player_id)
@@ -71,6 +69,8 @@ function create()
 
           self.current = self.data.whoami == self.data.game.current_player and "waiting_actions" or "idle"
         end,
+
+
         on_hovered_tile_changed = function(self, event, from, to, from_tile, to_tile)
           self.current = from
 
@@ -80,11 +80,15 @@ function create()
             self.data.move_path = path and utils.take_n(path, move) or {}
           end
         end,
+
+
         on_end_turn = function(self, event, from, to)
           self.data.game.current_player = self.data.whoami == "player_1" and "player_2" or "player_1"
           self.current = "idle"
           send({type = "end_turn"})
         end,
+
+
         on_turn_started = function(self, event, from, to, current_player, turn)
           self.current = current_player == self.data.whoami and "waiting_actions" or "idle"
           self.data.game.current_player = current_player
@@ -96,6 +100,8 @@ function create()
 
           game.reset_units(self.data.game.units, current_player)
         end,
+
+
         on_select_building = function(self, event, from, to, building)
           if board.is_building_mine(building, self.data.whoami) then
             self.current = "display_units_shop"
@@ -103,21 +109,31 @@ function create()
             self.current = from
           end
         end,
+
+
         on_enter_waiting_deployment_location = function(self, event, from, to, building)
           local headquarter_tile = board.headquarter_tile(self.data.game.map, self.data.whoami)
           self.data.available_tiles = board.available_tiles_around(self.data.game, headquarter_tile)
         end,
+
+
         on_select_unit_to_buy = function(self, event, from, to, unit_type)
           self.data.unit_to_buy = unit_type
         end,
+
+
         on_cancel_unit_buying = function(self, event, from, to)
           self.data.available_tiles = nil
         end,
+
+
         on_deploy_unit = function(self, event, from, to, unit_type, destination)
           local x, y = destination[1], destination[2]
           self.data.available_tiles = nil
           send({type = "buy_unit", unit_type = unit_type, tile = destination})
         end,
+
+
         on_unit_bought = function(self, event, from, to, unit, gold)
           if gold ~= nil then
             self.data.game.players[self.data.whoami].gold = gold
@@ -126,10 +142,14 @@ function create()
           self.data.ui.anims[unit.id] = {frame = 1, frames = 3, frame_countdown = math.random(), frame_duration = 0.5}
           self.current = from
         end,
+
+
         on_select_unit = function(self, event, from, to, unit)
           self.data.acting_unit = unit
           update_unit_action_box(self, unit, self.data.ui.unit_action_box)
         end,
+
+
         on_select_unit_action = function(self, event, from, to, action)
           local x, y = self.data.acting_unit.x, self.data.acting_unit.y
 
@@ -144,6 +164,8 @@ function create()
             self.data.available_tiles = board.available_tiles_around(self.data.game, {x, y}, radius)
           end
         end,
+
+
         on_move_unit = function(self, event, from, to, unit, destination_tile)
           local ox, oy = unit.x, unit.y
           local move = unit_types[self.data.acting_unit.unit_type_id].move
@@ -158,11 +180,15 @@ function create()
             send({type = "move_unit", unit_id = unit.id, tile = {final_tile.x, final_tile.y}})
           end
         end,
+
+
         on_cancel_unit_action = function(self, event, from, to)
           self.data.available_tiles = nil
           self.data.acting_unit = nil
           self.data.tiles_in_range = nil
         end,
+
+
         on_unit_moved = function(self, event, from, to, unit, origin_tile, destination_tile)
           local ox, oy = origin_tile[1], origin_tile[2]
           local dx, dy = destination_tile[1], destination_tile[2]
@@ -171,6 +197,8 @@ function create()
           self.data.ui.moving_units[unit.id] = {path = path, current = 1}
           self.current = from
         end,
+
+
         on_attack_unit = function(self, event, from, to, attacking_unit, target_tile)
           local tx, ty = target_tile[1], target_tile[2]
           local target_unit = self.data.game.units[tx .. "_" .. ty]
@@ -179,6 +207,8 @@ function create()
           attacking_unit.moved = true
           send({type = "attack_unit", unit_id = attacking_unit.id, tile = target_tile})
         end,
+
+
         on_fight_ended = function(self, event, from, to, attacking_unit, target_unit, result, winner)
           self.data.app.play_fight_cinematic(self.data.game, attacking_unit, target_unit, result)
           game.apply_fight_result(self, result)
@@ -190,9 +220,13 @@ function create()
             self.current = from
           end
         end,
+
+
         on_leave = function(self)
           send({type = "player_leaves_game"})
         end,
+
+
         on_player_left = function(self, event, from, to, winner)
           self.data.game.winner = winner
         end
@@ -201,10 +235,12 @@ function create()
   )
 end
 
+
 function callbacks.update(fsm, delta)
   update_animations_frame(fsm.data.ui.anims, delta)
   update_moving_units(fsm, fsm.data.ui.moving_units, fsm.data.ui.anims, delta)
 end
+
 
 function update_unit_action_box(fsm, unit, box)
   local board_box = fsm.data.ui.board_box
@@ -233,6 +269,7 @@ function update_unit_action_box(fsm, unit, box)
   }
 end
 
+
 function update_animations_frame(anims, delta)
   for id, anim in pairs(anims) do
     anim.frame_countdown = anim.frame_countdown - delta
@@ -246,6 +283,7 @@ function update_animations_frame(anims, delta)
     end
   end
 end
+
 
 function update_moving_units(fsm, moving_units, anims, delta)
   for _, unit in pairs(fsm.data.game.units) do
@@ -313,20 +351,14 @@ function update_moving_units(fsm, moving_units, anims, delta)
   end
 end
 
+
 function get_direction(last_step, next_step)
-  if next_step.x < last_step.x then
-    return "left"
-  end
-  if last_step.x < next_step.x then
-    return "right"
-  end
-  if last_step.y < next_step.y then
-    return "down"
-  end
-  if next_step.y < last_step.y then
-    return "up"
-  end
+  if next_step.x < last_step.x then return "left" end
+  if last_step.x < next_step.x then return "right" end
+  if last_step.y < next_step.y then return "down" end
+  if next_step.y < last_step.y then return "up" end
 end
+
 
 function callbacks.draw(fsm)
   draw_board(fsm, fsm.data.game.map, fsm.data.ui.board_box)
@@ -350,6 +382,7 @@ function callbacks.draw(fsm)
   set_cursor(fsm)
 end
 
+
 function draw_self_portrait(fsm)
   lg.setColor(0, 0, 0)
   lg.rectangle("fill", 0, 0, 115, 45)
@@ -367,6 +400,7 @@ function draw_self_portrait(fsm)
   lg.print(fsm.data.game.players[fsm.data.whoami].gold .. " €", 46, 25)
 end
 
+
 function draw_ennemy_portrait(fsm)
   local other_player = fsm.data.whoami == "player_1" and "player_2" or "player_1"
 
@@ -381,10 +415,9 @@ function draw_ennemy_portrait(fsm)
   lg.printf(fsm.data.game[other_player], 600, 5, 152, "right")
 end
 
+
 function draw_winner_box(fsm, box)
-  if not fsm.is("finished") then
-    return
-  end
+  if not fsm.is("finished") then return end
 
   lg.setColor(0, 0, 0)
   lg.rectangle("fill", box.x, box.y, box.width, box.height)
@@ -402,10 +435,9 @@ function draw_winner_box(fsm, box)
   end
 end
 
+
 function draw_attack_targets(fsm, board_box)
-  if not fsm.is("waiting_attack_target") then
-    return
-  end
+  if not fsm.is("waiting_attack_target") then return end
 
   for _, tile in ipairs(fsm.data.tiles_in_range) do
     local x, y = board.coords_of(tile[1], tile[2])
@@ -414,10 +446,9 @@ function draw_attack_targets(fsm, board_box)
   end
 end
 
+
 function draw_unit_action_box(fsm, box)
-  if not fsm.is("waiting_unit_action") then
-    return
-  end
+  if not fsm.is("waiting_unit_action") then return end
 
   lg.setColor(0, 0, 0)
   lg.rectangle("fill", box.x, box.y, box.width, box.height)
@@ -435,6 +466,7 @@ function draw_unit_action_box(fsm, box)
     lg.print(action_box.label, action_box.x + 5, action_box.y + 5)
   end
 end
+
 
 function draw_units(fsm, units, board_box)
   for _, unit in pairs(units) do
@@ -461,72 +493,46 @@ function draw_units(fsm, units, board_box)
   end
 end
 
+
 function draw_tips(fsm)
-  lg.setColor(1, 1, 1)
+  local text = nil
 
   if fsm.data.ui.hover.end_turn_button then
-    lg.printf("Cliquez sur ce bouton ou appuyez sur [retour arrière] pour terminer votre tour.", 0, 578, 800, "center")
+    text = "Cliquez sur ce bouton ou appuyez sur [retour arrière] pour terminer votre tour."
+
   elseif fsm.is("idle") then
-    lg.printf(
-      "Astuce : Les montagnes et forêts assurent une protection à vos unités. Profitez-en !",
-      0,
-      578,
-      800,
-      "center"
-    )
+    text = "Astuce : Les montagnes et forêts assurent une protection à vos unités. Profitez-en !"
+
   elseif fsm.is("waiting_actions") then
     if fsm.data.whoami == "player_1" then
-      lg.printf(
-        "Vous êtes ROUGE. Cliquez sur votre quartier général pour créer des unités, puis cliquez sur vos unités pour agir.",
-        0,
-        578,
-        800,
-        "center"
-      )
+      text = "Vous êtes ROUGE. Cliquez sur votre quartier général pour créer des unités, puis cliquez sur vos unités pour agir."
     else
-      lg.printf(
-        "Vous êtes BLEU. Cliquez sur votre quartier général pour créer des unités, puis cliquez sur vos unités pour agir.",
-        0,
-        578,
-        800,
-        "center"
-      )
+      text = "Vous êtes BLEU. Cliquez sur votre quartier général pour créer des unités, puis cliquez sur vos unités pour agir."
     end
+
   elseif fsm.is("finished") then
     if fsm.data.game.winner == fsm.data.whoami then
-      lg.printf(
-        "Félicitations ! Appuyez sur [échap] pour retourner au menu principal. Continuez comme ça !",
-        0,
-        578,
-        800,
-        "center"
-      )
+      text = "Félicitations ! Appuyez sur [échap] pour retourner au menu principal. Continuez comme ça !"
     else
-      lg.printf(
-        "Vous avez perdu ! Appuyez honteusement sur [échap] pour retourner au menu principal. Tâchez de faire mieux !",
-        0,
-        578,
-        800,
-        "center"
-      )
+      text = "Vous avez perdu ! Appuyez honteusement sur [échap] pour retourner au menu principal. Tâchez de faire mieux !"
     end
+
   elseif fsm.is("waiting_deployment_location") or fsm.is("waiting_move_destination") or fsm.is("waiting_attack_target") then
-    lg.printf(
-      "Cliquez gauche pour valider. Cliquez droit ou appuyez sur [échap] pour annuler l'ordre.",
-      0,
-      578,
-      800,
-      "center"
-    )
+    text = "Cliquez gauche pour valider. Cliquez droit ou appuyez sur [échap] pour annuler l'ordre."
+
   elseif fsm.is("display_units_shop") then
-    lg.printf("Cliquez droit ou appuyez sur [échap] pour fermer la fenêtre d'achat.", 0, 578, 800, "center")
+    text = "Cliquez droit ou appuyez sur [échap] pour fermer la fenêtre d'achat."
+  end
+
+  if text then
+    lg.setColor(1, 1, 1)
+    lg.printf(text, 0, 578, 800, "center")
   end
 end
 
+
 function draw_deployment_locations(fsm, board_box)
-  if not fsm.is("waiting_deployment_location") then
-    return
-  end
+  if not fsm.is("waiting_deployment_location") then return end
 
   for _, tile in ipairs(fsm.data.available_tiles) do
     local x, y = board.coords_of(tile[1], tile[2])
@@ -535,10 +541,9 @@ function draw_deployment_locations(fsm, board_box)
   end
 end
 
+
 function draw_move_destinations(fsm, board_box)
-  if not fsm.is("waiting_move_destination") then
-    return
-  end
+  if not fsm.is("waiting_move_destination") then return end
 
   for _, tile in ipairs(fsm.data.available_tiles) do
     local x, y = board.coords_of(tile[1], tile[2])
@@ -553,10 +558,9 @@ function draw_move_destinations(fsm, board_box)
   end
 end
 
+
 function draw_units_shop_box(fsm, box)
-  if not fsm.is("display_units_shop") then
-    return
-  end
+  if not fsm.is("display_units_shop") then return end
 
   lg.setColor(0, 0, 0)
   lg.rectangle("fill", box.x, box.y, box.width, box.height)
@@ -575,6 +579,7 @@ function draw_units_shop_box(fsm, box)
     lg.printf(unit_box.cost .. " €", unit_box.x, unit_box.y + 5, unit_box.width - 5, "right")
   end
 end
+
 
 function draw_board(fsm, map, box)
   for j = 1, map.rows do
@@ -596,10 +601,9 @@ function draw_board(fsm, map, box)
   lg.rectangle("line", box.x, box.y, box.width, box.height)
 end
 
+
 function draw_selection_rectangle(fsm, box)
-  if fsm.is("waiting_unit_action") then
-    return
-  end
+  if fsm.is("waiting_unit_action") then return end
 
   if fsm.data.ui.hover.tile then
     local i, j = fsm.data.ui.hover.tile[1], fsm.data.ui.hover.tile[2]
@@ -609,6 +613,7 @@ function draw_selection_rectangle(fsm, box)
     lg.rectangle("line", box.x + x, box.y + y, board.tile_side, board.tile_side)
   end
 end
+
 
 function set_cursor(fsm)
   love.mouse.setCursor(arrow_cursor)
@@ -645,13 +650,10 @@ function set_cursor(fsm)
   end
 end
 
+
 function draw_end_turn_button(fsm)
-  if fsm.is("finished") then
-    return
-  end
-  if fsm.data.whoami ~= fsm.data.game.current_player then
-    return
-  end
+  if fsm.is("finished") then return end
+  if fsm.data.whoami ~= fsm.data.game.current_player then return end
 
   local button = fsm.data.ui.end_turn_button
   local hover = fsm.data.ui.hover.end_turn_button
@@ -671,12 +673,14 @@ function draw_end_turn_button(fsm)
   lg.printf("Terminer le tour", button.x, button.y + 5, button.width, "center")
 end
 
+
 function draw_tile(terrain, i, j, box)
   local x, y = board.coords_of(i, j)
   local offset = board.is_two_tiles_high(building) and -board.tile_side or 0
   lg.setColor(1, 1, 1)
   lg.draw(board.sprite, board[terrain], box.x + x, box.y + y + offset, 0, scale, scale)
 end
+
 
 function draw_buildings(fsm, map, board_box)
   for j = 1, map.rows do
@@ -688,6 +692,7 @@ function draw_buildings(fsm, map, board_box)
   end
 end
 
+
 function draw_building(fsm, building, i, j, box)
   local x, y = board.coords_of(i, j)
   local frame = fsm.data.ui.anims[building].frame
@@ -697,21 +702,27 @@ function draw_building(fsm, building, i, j, box)
   lg.draw(board.sprite, quad, box.x + x, box.y + y + offset, 0, scale, scale)
 end
 
+
 function callbacks.event_received(fsm, event)
   -- print("event received", event.type, json.encode(event))
 
   if event.type == "turn_started" then
     fsm.turn_started(event.current_player, event.turn)
+
   elseif event.type == "unit_bought" then
     fsm.unit_bought(event.unit, event.gold)
+
   elseif event.type == "unit_moved" then
     fsm.unit_moved(event.unit, event.origin, event.destination)
+
   elseif event.type == "fight_ended" then
     fsm.fight_ended(event.attacking_unit, event.target_unit, event.result, event.winner)
+
   elseif event.type == "player_left" then
     fsm.player_left(event.winner)
   end
 end
+
 
 function callbacks.mousemoved(fsm, x, y)
   fsm.data.ui.hover.end_turn_button = false
@@ -726,6 +737,7 @@ function callbacks.mousemoved(fsm, x, y)
         break
       end
     end
+
   elseif fsm.is("waiting_unit_action") then
     for id, action_box in pairs(fsm.data.ui.unit_action_box.children) do
       if utils.is_within_box(x, y, action_box) and not action_box.disabled then
@@ -753,43 +765,51 @@ function callbacks.mousemoved(fsm, x, y)
   end
 end
 
+
 function callbacks.mousepressed(fsm, x, y, button)
   if button == 2 and fsm.is("display_units_shop") then
     fsm.close_units_shop()
     return
+
   elseif button == 1 and fsm.is("display_units_shop") and fsm.data.ui.hover.units_shop_unit then
     fsm.select_unit_to_buy(fsm.data.ui.hover.units_shop_unit)
     return
+
   elseif button == 2 and fsm.is("waiting_deployment_location") then
     fsm.cancel_unit_buying()
     return
-  elseif
-    button == 2 and
-      (fsm.is("waiting_unit_action") or fsm.is("waiting_move_destination") or fsm.is("waiting_attack_target"))
-   then
+
+  elseif button == 2 and (fsm.is("waiting_unit_action") or fsm.is("waiting_move_destination") or fsm.is("waiting_attack_target")) then
     fsm.cancel_unit_action()
     return
+
   elseif button == 1 and fsm.is("waiting_unit_action") and fsm.data.ui.hover.unit_action then
     fsm.select_unit_action(fsm.data.ui.hover.unit_action)
     return
+
   elseif button == 1 and fsm.is("waiting_move_destination") then
     local chosen_tile = board.tile_at(fsm.data.game.map, x - fsm.data.ui.board_box.x, y - fsm.data.ui.board_box.y)
+
     for _, tile in ipairs(fsm.data.available_tiles) do
       if chosen_tile[1] == tile[1] and chosen_tile[2] == tile[2] then
         fsm.move_unit(fsm.data.acting_unit, chosen_tile)
         return
       end
     end
+
   elseif button == 1 and fsm.is("waiting_attack_target") then
     local chosen_tile = board.tile_at(fsm.data.game.map, x - fsm.data.ui.board_box.x, y - fsm.data.ui.board_box.y)
+
     for _, tile in ipairs(fsm.data.available_tiles) do
       if chosen_tile[1] == tile[1] and chosen_tile[2] == tile[2] then
         fsm.attack_unit(fsm.data.acting_unit, chosen_tile)
         return
       end
     end
+
   elseif button == 1 and fsm.is("waiting_deployment_location") then
     local chosen_tile = board.tile_at(fsm.data.game.map, x - fsm.data.ui.board_box.x, y - fsm.data.ui.board_box.y)
+
     for _, tile in ipairs(fsm.data.available_tiles) do
       if chosen_tile[1] == tile[1] and chosen_tile[2] == tile[2] then
         fsm.deploy_unit(fsm.data.unit_to_buy, chosen_tile)
@@ -808,38 +828,46 @@ function callbacks.mousepressed(fsm, x, y, button)
     if unit then
       if fsm.is("waiting_actions") and fsm.data.whoami == unit.owner then
         fsm.select_unit(unit)
+
       elseif fsm.is("waiting_unit_action") and fsm.data.whoami == unit.owner then
         fsm.cancel_unit_action()
         fsm.select_unit(unit)
       end
+
     elseif fsm.can("select_building") and button == 1 then
       fsm.select_building(fsm.data.game.map.buildings[coords])
     end
+
   elseif utils.is_within_box(x, y, fsm.data.ui.end_turn_button) then
     fsm.end_turn()
   end
 end
 
+
 function callbacks.keypressed(fsm, key)
   if key == "escape" and fsm.is("display_units_shop") then
     fsm.close_units_shop()
+
   elseif key == "escape" and fsm.is("waiting_deployment_location") then
     fsm.cancel_unit_buying()
-  elseif
-    key == "escape" and
-      (fsm.is("waiting_unit_action") or fsm.is("waiting_move_destination") or fsm.is("waiting_attack_target"))
-   then
+
+  elseif key == "escape" and (fsm.is("waiting_unit_action") or fsm.is("waiting_move_destination") or fsm.is("waiting_attack_target")) then
     fsm.cancel_unit_action()
+
   elseif key == "escape" and fsm.is("finished") then
     fsm.data.app.display_main_menu(fsm.data.player_id)
+
   elseif key == "escape" then
     fsm.leave()
+
   elseif key == "backspace" then
     fsm.end_turn()
+
   elseif key == "q" then
     love.event.quit()
   end
 end
+
 
 function build_shop_box(box, unit_types)
   local children = {}
@@ -864,6 +892,7 @@ function build_shop_box(box, unit_types)
   return box
 end
 
+
 function build_anims(units, other_anims)
   local anims = other_anims
   for _, unit in pairs(units) do
@@ -871,5 +900,6 @@ function build_anims(units, other_anims)
   end
   return anims
 end
+
 
 return { callbacks = callbacks, create = create }
