@@ -96,14 +96,12 @@ end
 
 
 function love.update(delta)
-  -- print("love update")
   app.data.callbacks.update(app.data.fsm, delta)
   connect_or_poll_server(network, app.data.player_id, delta, app.data.callbacks.event_received)
 end
 
 
 function love.draw()
-  -- print("love draw")
   lg.setLineWidth(1)
   lg.setLineStyle("rough")
 

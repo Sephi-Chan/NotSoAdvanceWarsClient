@@ -1,6 +1,6 @@
 local callbacks = {}
 
-function create(attacking_unit, target_unit, result, callback)
+local function create(attacking_unit, target_unit, result, callback)
   return lua_fsm.create({
     initial = "fading",
     events = {
@@ -28,18 +28,23 @@ function create(attacking_unit, target_unit, result, callback)
         self.waiting_countdown = 0.2
         self.opacity           = 1
 
-        for i = 1, math.ceil(attacking_unit.count/2) do
+        local attackers_count_to_display_before = math.ceil(5 * attacking_unit.count/10)
+        local attackers_count_to_display_after  = math.ceil(5 * result.attacking_unit.count/10)
+        local attackers_losses_to_display       = attackers_count_to_display_before - attackers_count_to_display_after
 
-          local attacker = spawn_attacking_unit(self, "attacker " .. i, i, attacking_unit)
+        for index = 1, attackers_count_to_display_before do
+          local will_explode = result.attacking_unit.count == 0 or index <= attackers_losses_to_display
+          local attacker     = spawn_attacking_unit(self, index, attacking_unit, will_explode)
           table.insert(self.attackers, attacker)
         end
 
-        local targets_animations = animations[target_unit.owner][target_unit.unit_type_id] or animations[target_unit.owner].recon
-        local count_to_display   = math.ceil(5 * result.target_unit.count/10) -- varies between 0 and 5
-        for i = 1, math.ceil(target_unit.count/2) do -- varies between 1 and 5
-          local position     = targets_animations.target_positions[i]
-          local is_destroyed = count_to_display == 0 or i <= count_to_display
-          local target       = spawn_target_unit(self, "target " .. i, position.x, position.y, targets_animations, is_destroyed)
+        local targets_count_to_display_before = math.ceil(5 * target_unit.count/10)
+        local targets_count_to_display_after  = math.ceil(5 * result.target_unit.count/10)
+        local targets_losses_to_display       = targets_count_to_display_before - targets_count_to_display_after
+
+        for index = 1, targets_count_to_display_before do
+          local will_explode = result.target_unit.count == 0 or index <= targets_losses_to_display
+          local target       = spawn_target_unit(self, index, target_unit, will_explode)
           table.insert(self.targets, target)
         end
       end,
@@ -57,7 +62,7 @@ function create(attacking_unit, target_unit, result, callback)
       on_keep_fading = function(self, event, from, to, delta)
         self.waiting_countdown = self.waiting_countdown - delta
         if self.waiting_countdown < 0 then self.start(delta) end
-        self.opacity = self.opacity - 0.8 * delta
+        self.opacity = math.max(self.opacity - 0.8 * delta, 0)
       end,
 
 
@@ -65,7 +70,7 @@ function create(attacking_unit, target_unit, result, callback)
         self.background.update(delta)
         for i, attacker in ipairs(self.attackers) do attacker.update(delta) end
         for i, target in ipairs(self.targets) do target.update(delta) end
-        self.opacity = self.opacity - 0.8 * delta
+        self.opacity = math.max(self.opacity - 0.8 * delta, 0)
       end,
 
 
@@ -119,7 +124,7 @@ function create(attacking_unit, target_unit, result, callback)
       on_keep_finishing = function(self, event, from, to, delta)
         self.outro_countdown = self.outro_countdown - delta
         if self.outro_countdown < 0 then self.stop() end
-        self.opacity = self.opacity + 0.8 * delta
+        self.opacity = math.min(self.opacity + 0.8 * delta, 1)
       end,
 
 
@@ -131,7 +136,7 @@ function create(attacking_unit, target_unit, result, callback)
 end
 
 
-function spawn_attacking_unit(cinematic, id, index, attacking_unit)
+function spawn_attacking_unit(cinematic, index, attacking_unit, will_explode)
   return lua_fsm.create({
     initial = "moving",
     events = {
@@ -144,6 +149,14 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
       { name = "fire",         from = "idling",  to = "firing" },
       { name = "keep_firing",  from = "firing",  to = "firing" },
       { name = "cease_fire",   from = "firing",  to = "idling" },
+
+      { name = "suffer",         from = "idling",    to = "suffering" },
+      { name = "keep_suffering", from = "suffering", to = "suffering" },
+      { name = "explode",        from = "suffering", to = "exploding" },
+      { name = "keep_exploding", from = "exploding", to = "exploding" },
+      { name = "turn_to_ashes",  from = "exploding", to = "finished" },
+      { name = "recover",        from = "suffering", to = "finished" },
+
       { name = "stop",         from = "idling",  to = "finished" },
       { name = "update",       from = "*",       to = "*" },
       { name = "draw",         from = "*",       to = "*" }
@@ -152,26 +165,29 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
       on_startup = function(self)
         self.weapon           = attacking_unit.unit_type_id == "recon" and "submachine_gun" or (0 < attacking_unit.ammo and "cannon" or "submachine_gun")
         self.moving           = attacking_unit.unit_type_id ~= "artillery"
-        self.id               = id
+        self.id               = "attacker_" .. index
         self.cinematic        = cinematic
         self.frame_duration   = 0.1
         self.frame_countdown  = self.frame_duration
-        self.animations       = animations[attacking_unit.owner][attacking_unit.unit_type_id] or animations[attacking_unit.owner].recon
         self.animation        = "moving"
         self.frame            = 1
+        self.animations       = animations[attacking_unit.owner][attacking_unit.unit_type_id]
         self.x                = self.animations.attacking_positions[index].x
         self.y                = self.animations.attacking_positions[index].y
-        self.ammo             = self.weapon == "cannon" and 1 or 2
         self.moving_countdown = self.animations.attacking_positions[index].moving_countdown
+        self.ammo             = self.weapon == "cannon" and 1 or 2
+        self.will_explode     = will_explode
       end,
 
 
       on_update = function(self, event, from, to, delta)
         self.current = from
-        if     self.current == "moving"  then self.keep_moving(delta)
-        elseif self.current == "braking" then self.keep_braking(delta)
-        elseif self.current == "idling"  then self.keep_idling(delta)
-        elseif self.current == "firing"  then self.keep_firing(delta)
+        if     self.current == "moving"    then self.keep_moving(delta)
+        elseif self.current == "braking"   then self.keep_braking(delta)
+        elseif self.current == "idling"    then self.keep_idling(delta)
+        elseif self.current == "firing"    then self.keep_firing(delta)
+        elseif self.current == "suffering" then self.keep_suffering(delta)
+        elseif self.current == "exploding" then self.keep_exploding(delta)
         end
       end,
 
@@ -211,7 +227,7 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
         if self.idling_countdown < 0 and 0 < self.ammo then
           self.fire(delta)
         elseif self.ammo == 0 then
-          self.stop()
+          self.suffer(delta)
         end
       end,
 
@@ -240,6 +256,77 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
       end,
 
 
+      on_suffer = function(self, event, from, to, delta)
+        self.suffering_countdown = 1
+        self.flash_countdown     = 0
+        self.delay_between_flashes = function() return (math.random() + 0.8) end
+        self.flashing_duration   = 0.02
+        self.flashing_countdown  = self.flashing_duration
+        self.flashing            = false
+      end,
+
+
+      on_keep_suffering = function(self, event, from, to, delta)
+        self.suffering_countdown = self.suffering_countdown - delta
+        if self.suffering_countdown < 0 then
+          if self.will_explode then self.explode(delta)
+          else self.recover(delta) end
+        end
+
+        self.flash_countdown = self.flash_countdown - delta
+        if self.flash_countdown < 0 then
+          self.flashing = true
+          self.x = self.x - math.random(50, 100) * delta
+        end
+
+        if self.flashing then
+          self.flashing_countdown = self.flashing_countdown - delta
+          if self.flashing_countdown < 0 then
+            self.flashing = false
+            self.flashing_countdown = self.flashing_duration
+            self.flash_countdown = self.delay_between_flashes()
+          end
+        end
+      end,
+
+
+      on_explode = function(self, event, from, to, delta)
+        self.flashing = false
+        self.exploded = true
+        self.exploding = true
+        self.explosion_frame = 1
+        self.explosion_frame_duration = 0.1
+        self.explosion_frame_countdown = self.explosion_frame_duration
+      end,
+
+
+      on_keep_exploding = function(self, event, from, to, delta)
+        self.explosion_frame_countdown = self.explosion_frame_countdown - delta
+
+        if self.explosion_frame_countdown < 0 then
+          if self.explosion_frame < #animations.explosion then
+            self.explosion_frame = self.explosion_frame + 1
+            self.explosion_frame_countdown = self.explosion_frame_duration
+
+          else
+            self.exploding = false
+            self.turn_to_ashes()
+          end
+        end
+      end,
+
+
+      on_turn_to_ashes = function(self, event, from, to)
+        self.cinematic.sub_animation_ended(self.id)
+      end,
+
+
+      on_recover = function(self, event, from, to, delta)
+        self.flashing = false
+        self.cinematic.sub_animation_ended(self.id)
+      end,
+
+
       on_stop = function(self)
         self.cinematic.sub_animation_ended(self.id)
       end,
@@ -247,15 +334,34 @@ function spawn_attacking_unit(cinematic, id, index, attacking_unit)
 
       on_draw = function(self, event, from, to)
         self.current = from
-        lg.setColor(1, 1, 1)
-        lg.draw(self.animations.sprite, self.animations[self.animation][self.frame], self.x, self.y, 0, 2, 2)
+
+        if not self.exploded then
+          local quad = self.animations[self.animation][self.frame]
+          if quad then
+            lg.setColor(1, 1, 1)
+            lg.draw(self.animations.sprite, quad, self.x, self.y, 0, 2, 2)
+          else
+            -- FIXME: Bug noticed with artillery when going upright.
+            print("FAIL: No quad for", tostring(self.id), tostring(self.animation), tostring(self.frame))
+          end
+        end
+
+        if self.exploding then
+          local quad = animations.explosion[self.explosion_frame]
+          lg.draw(animations.sprites.explosion, quad, self.x, self.y, 0, 2, 2)
+        end
+
+        if self.flashing then
+          lg.setColor(1, 1, 1)
+          lg.rectangle("fill", 0, 100, 400, 336)
+        end
       end
     }
   })
 end
 
 
-function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
+function spawn_target_unit(cinematic, index, target_unit, is_destroyed)
   return lua_fsm.create({
     initial = "moving",
     events = {
@@ -263,23 +369,28 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
       { name = "keep_idling",     from = "idling",     to = "idling" },
       { name = "suffer",          from = "idling",     to = "suffering" },
       { name = "keep_suffering",  from = "suffering",  to = "suffering" },
-      { name = "explode",         from = "suffering",  to = "finished" },
+      { name = "explode",         from = "suffering",  to = "exploding" },
+      { name = "keep_exploding",  from = "exploding",  to = "exploding" },
+      { name = "turn_to_ashes",   from = "exploding",  to = "finished" },
       { name = "recover",         from = "suffering",  to = "finished" },
       { name = "update" ,         from = "*",          to = "*" },
       { name = "draw",            from = "*",          to = "*" }
     },
     callbacks = {
       on_startup = function(self)
-        self.id               = id
+        self.id               = "target_" .. index
         self.cinematic        = cinematic
         self.is_destroyed     = is_destroyed
         self.frame_duration   = 0.1
         self.frame_countdown  = self.frame_duration
-        self.animations       = animations
+        self.animations       = animations[target_unit.owner][target_unit.unit_type_id]
+        self.x                = self.animations.target_positions[index].x
+        self.y                = self.animations.target_positions[index].y
+        self.moving_countdown = self.animations.target_positions[index].moving_countdown
+        self.weapon           = target_unit.unit_type_id == "recon" and "submachine_gun" or (0 < target_unit.ammo and "cannon" or "submachine_gun")
         self.animation        = "idling"
+        self.will_retaliate   = target_unit.unit_type_id ~= "artillery"
         self.frame            = 1
-        self.x                = x
-        self.y                = y
         self.idling_countdown = 2.2
         self.exploded         = false
       end,
@@ -293,7 +404,7 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
 
       on_suffer = function(self, event, from, to, delta)
         self.suffering_countdown = 3
-
+        self.animation           = self.will_retaliate and "firing" or "idling"
         self.flash_countdown     = 0
         self.delay_between_flashes = function() return (math.random() + 0.8) end
         self.flashing_duration   = 0.02
@@ -303,6 +414,7 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
 
 
       on_keep_suffering = function(self, event, from, to, delta)
+        animate_unit(self, delta)
         self.suffering_countdown = self.suffering_countdown - delta
         if self.suffering_countdown < 0 then
           if self.is_destroyed then self.explode(delta)
@@ -327,13 +439,41 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
 
 
       on_explode = function(self, event, from, to, delta)
+        self.animation = "idling"
+        self.frame = 1
         self.flashing = false
         self.exploded = true
+        self.exploding = true
+        self.explosion_frame = 1
+        self.explosion_frame_duration = 0.1
+        self.explosion_frame_countdown = self.explosion_frame_duration
+      end,
+
+
+      on_keep_exploding = function(self, event, from, to, delta)
+        self.explosion_frame_countdown = self.explosion_frame_countdown - delta
+
+        if self.explosion_frame_countdown < 0 then
+          if self.explosion_frame < #animations.explosion then
+            self.explosion_frame = self.explosion_frame + 1
+            self.explosion_frame_countdown = self.explosion_frame_duration
+
+          else
+            self.exploding = false
+            self.turn_to_ashes()
+          end
+        end
+      end,
+
+
+      on_turn_to_ashes = function(self, event, from, to)
         self.cinematic.sub_animation_ended(self.id)
       end,
 
 
       on_recover = function(self, event, from, to, delta)
+        self.animation = "idling"
+        self.frame = 1
         self.flashing = false
         self.cinematic.sub_animation_ended(self.id)
       end,
@@ -344,6 +484,7 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
 
         if     self.current == "idling"    then self.keep_idling(delta)
         elseif self.current == "suffering" then self.keep_suffering(delta)
+        elseif self.current == "exploding" then self.keep_exploding(delta)
         end
       end,
 
@@ -354,6 +495,11 @@ function spawn_target_unit(cinematic, id, x, y, animations, is_destroyed)
         if not self.exploded then
           lg.setColor(1, 1, 1)
           lg.draw(self.animations.sprite, self.animations[self.animation][self.frame], self.x, self.y, 0, -2, 2)
+        end
+
+        if self.exploding then
+          local quad = animations.explosion[self.explosion_frame]
+          lg.draw(animations.sprites.explosion, quad, self.x - 120, self.y, 0, 2, 2)
         end
 
         if self.flashing then

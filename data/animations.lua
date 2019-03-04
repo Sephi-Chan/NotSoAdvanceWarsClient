@@ -24,11 +24,26 @@ local sprites = {
 
   plain_large = lg.newImage("assets/plain_large.png"),
 
-  characters = lg.newImage("assets/characters.png")
+  characters = lg.newImage("assets/characters.png"),
+
+  explosion = lg.newImage("assets/explosion.png")
 }
 
 local animations = {
   sprites = sprites,
+
+  explosion = {
+    lg.newQuad(  0, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad( 32, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad( 64, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad( 96, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad(128, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad(160, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad(192, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad(224, 0, 32, 32, sprites.explosion:getDimensions()),
+    lg.newQuad(256, 0, 32, 32, sprites.explosion:getDimensions()),
+  },
+
 
   player_1 = {
     cover = lg.newQuad(0, 72, 128, 160, sprites.characters:getDimensions()),
