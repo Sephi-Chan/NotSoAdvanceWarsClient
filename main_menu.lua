@@ -185,14 +185,15 @@ function draw_open_lobbies_box(fsm)
     local lobby  = fsm.data.open_lobbies[lobby_id]
     local owner  = lobby.player_1 == fsm.data.player_id
     local hover  = not owner and fsm.data.ui.hover.open_lobby_box == lobby_id
-    local suffix = owner and " (créée par vous)" or ""
+    local title  = "Duel contre " .. lobby.player_1
+    local suffix = owner and " (non, vous ne pouvez pas !)" or ""
 
     lg.setColor(hover and { 0.6, 0.6, 0.6 } or { 0, 0, 0 })
     lg.rectangle("fill", lobby_box.x, lobby_box.y, lobby_box.width, lobby_box.height)
 
     lg.setColor(owner and self_color or { 1, 1, 1 })
     lg.rectangle("line", lobby_box.x, lobby_box.y, lobby_box.width, lobby_box.height)
-    lg.print(lobby_id .. suffix, lobby_box.x + 5, lobby_box.y + 5)
+    lg.print(title .. suffix, lobby_box.x + 5, lobby_box.y + 5)
   end
 
   draw_add_lobby_button(fsm)
