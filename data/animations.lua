@@ -122,6 +122,11 @@ local animations = {
         lg.newQuad(192, 0, 16, 16, sprites.map_red_recon:getDimensions()),
         lg.newQuad(208, 0, 16, 16, sprites.map_red_recon:getDimensions()),
         lg.newQuad(224, 0, 16, 16, sprites.map_red_recon:getDimensions())
+      },
+      map_idle_left = {
+        lg.newQuad(240, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(256, 0, 16, 16, sprites.map_red_recon:getDimensions()),
+        lg.newQuad(272, 0, 16, 16, sprites.map_red_recon:getDimensions())
       }
     },
 
@@ -197,6 +202,12 @@ local animations = {
         lg.newQuad(208, 0, 16, 16, sprites.map_red_tank:getDimensions()),
         lg.newQuad(224, 0, 16, 16, sprites.map_red_tank:getDimensions()),
         lg.newQuad(240, 0, 16, 16, sprites.map_red_tank:getDimensions())
+      },
+      map_idle_left = {
+        lg.newQuad(256, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(272, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(288, 0, 16, 16, sprites.map_red_tank:getDimensions()),
+        lg.newQuad(304, 0, 16, 16, sprites.map_red_tank:getDimensions())
       }
     },
 
@@ -272,6 +283,12 @@ local animations = {
       map_left = {
         lg.newQuad(192, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
         lg.newQuad(208, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+      },
+      map_idle_left = {
+        lg.newQuad(224, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(240, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(256, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
+        lg.newQuad(272, 0, 16, 16, sprites.map_red_medium_tank:getDimensions()),
       }
     },
 
@@ -335,6 +352,12 @@ local animations = {
         lg.newQuad(208, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
         lg.newQuad(224, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
         lg.newQuad(240, 0, 16, 16, sprites.map_red_artillery:getDimensions())
+      },
+      map_idle_left = {
+        lg.newQuad(256, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(272, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(288, 0, 16, 16, sprites.map_red_artillery:getDimensions()),
+        lg.newQuad(304, 0, 16, 16, sprites.map_red_artillery:getDimensions())
       }
     }
   }
@@ -363,7 +386,8 @@ animations.player_2 = {
     map_up              = animations.player_1.recon.map_up,
     map_right           = animations.player_1.recon.map_right,
     map_idle            = animations.player_1.recon.map_idle,
-    map_left            = animations.player_1.recon.map_left
+    map_left            = animations.player_1.recon.map_left,
+    map_idle_left       = animations.player_1.recon.map_idle_left
   },
 
   tank = {
@@ -380,7 +404,8 @@ animations.player_2 = {
     map_up              = animations.player_1.tank.map_up,
     map_right           = animations.player_1.tank.map_right,
     map_idle            = animations.player_1.tank.map_idle,
-    map_left            = animations.player_1.tank.map_left
+    map_left            = animations.player_1.tank.map_left,
+    map_idle_left       = animations.player_1.tank.map_idle_left
   },
 
   medium_tank = {
@@ -397,7 +422,8 @@ animations.player_2 = {
     map_up              = animations.player_1.medium_tank.map_up,
     map_right           = animations.player_1.medium_tank.map_right,
     map_idle            = animations.player_1.medium_tank.map_idle,
-    map_left            = animations.player_1.medium_tank.map_left
+    map_left            = animations.player_1.medium_tank.map_left,
+    map_idle_left       = animations.player_1.medium_tank.map_idle_left
   },
 
   artillery = {
@@ -414,7 +440,8 @@ animations.player_2 = {
     map_up              = animations.player_1.artillery.map_up,
     map_right           = animations.player_1.artillery.map_right,
     map_idle            = animations.player_1.artillery.map_idle,
-    map_left            = animations.player_1.artillery.map_left
+    map_left            = animations.player_1.artillery.map_left,
+    map_idle_left       = animations.player_1.artillery.map_idle_left
   }
 }
 

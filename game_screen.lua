@@ -318,6 +318,7 @@ function update_moving_units(fsm, moving_units, delta)
 
       if next_step then
         local direction = get_direction(last_step, next_step)
+        unit.last_direction = direction
 
         if direction == "right" then
           unit.animation = "map_right"
@@ -372,10 +373,11 @@ function update_moving_units(fsm, moving_units, delta)
         unit.y = last_step.y
         unit.shift_y = 0
         unit.moved = true
+        unit.fired = unit.unit_type_id == "artillery"
         moving_units[unit.id] = nil
         fsm.data.game.units[origin.x .. "_" .. origin.y] = nil
         fsm.data.game.units[unit.x .. "_" .. unit.y] = unit
-        unit.animation = "map_idle"
+        unit.animation = unit.last_direction == "left" and "map_idle_left" or "map_idle"
       end
     end
   end
