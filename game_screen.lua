@@ -250,12 +250,21 @@ function animate_units(units, delta)
     unit.frame_countdown = unit.frame_countdown - delta
     if unit.frame_countdown <= 0 then
       unit.frame_countdown = unit.frame_duration
-      unit.frame = unit.frame + 1
 
-      if unit.frame > #animations[unit.owner][unit.unit_type_id][unit.animation] then
+      if unit.frame < #animations[unit.owner][unit.unit_type_id][unit.animation] then
+        unit.frame = unit.frame + 1
+      else
         unit.frame = 1
       end
     end
+  end
+end
+
+
+function change_animation(unit, new_animation)
+  if unit.animation ~= new_animation then
+    unit.animation = new_animation
+    unit.frame     = 1
   end
 end
 
@@ -322,47 +331,43 @@ function update_moving_units(fsm, moving_units, delta)
         unit.last_direction = direction
 
         if direction == "right" then
-          unit.animation = "map_right"
+          change_animation(unit, "map_right")
           if unit.step_shift_x < 32 then
             unit.step_shift_x = unit.step_shift_x + speed * delta
             unit.shift_x = unit.shift_x + speed * delta
           else
             unit.step_shift_x = 0
             data.current = data.current + 1
-            unit.frame = 1
           end
 
         elseif direction == "down" then
-          unit.animation = "map_down"
+          change_animation(unit, "map_down")
           if unit.step_shift_y < 32 then
             unit.step_shift_y = unit.step_shift_y + speed * delta
             unit.shift_y = unit.shift_y + speed * delta
           else
             unit.step_shift_y = 0
             data.current = data.current + 1
-            unit.frame = 1
           end
 
         elseif direction == "left" then
-          unit.animation = "map_left"
+          change_animation(unit, "map_left")
           if unit.step_shift_x > -32 then
             unit.step_shift_x = unit.step_shift_x - speed * delta
             unit.shift_x = unit.shift_x - speed * delta
           else
             unit.step_shift_x = 0
             data.current = data.current + 1
-            unit.frame = 1
           end
 
         elseif direction == "up" then
-          unit.animation = "map_up"
+          change_animation(unit, "map_up")
           if unit.step_shift_y > -32 then
             unit.step_shift_y = unit.step_shift_y - speed * delta
             unit.shift_y = unit.shift_y - speed * delta
           else
             unit.step_shift_y = 0
             data.current = data.current + 1
-            unit.frame = 1
           end
         end
 
@@ -378,7 +383,7 @@ function update_moving_units(fsm, moving_units, delta)
         moving_units[unit.id] = nil
         fsm.data.game.units[origin.x .. "_" .. origin.y] = nil
         fsm.data.game.units[unit.x .. "_" .. unit.y] = unit
-        unit.animation = unit.last_direction == "left" and "map_idle_left" or "map_idle"
+        change_animation(unit, unit.last_direction == "left" and "map_idle_left" or "map_idle")
       end
     end
   end
@@ -513,13 +518,7 @@ function draw_units(fsm, units, board_box)
     local y = math.floor(board_box.y + ty + (unit.shift_y or 0))
 
     lg.setColor(done and {0.5, 0.5, 0.5} or {1, 1, 1})
-    if quad then
-      lg.draw(sprite, quad, x, y, 0, scale, scale)
-    else
-      -- FIXME: How can unit frame go too high despite the frame check in animate_units?
-      -- Bug noticed with artillery when going upright.
-      print("FAIL: No quad for", tostring(unit.owner), tostring(unit.unit_type_id), tostring(unit.animation), tostring(unit.frame))
-    end
+    lg.draw(sprite, quad, x, y, 0, scale, scale)
 
     if unit.count < 10 then
       local rw, rh = 10, 14
