@@ -65,6 +65,7 @@ function create()
           }
 
           self.current = self.data.whoami == self.data.game.current_player and "waiting_actions" or "idle"
+          sound_box.play_sound("horn", 0.4)
         end,
 
 
