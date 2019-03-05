@@ -67,7 +67,7 @@ local app = lua_fsm.create({
     end,
 
 
-    on_play_fight_cinematic = function(self, event, from, to, game, attacking_unit, target_unit, result)
+    on_play_fight_cinematic = function(self, event, from, to, game, attacking_unit, target_unit, result, whoami)
       local previous_fsm       = self.data.fsm
       local previous_callbacks = self.data.callbacks
 
@@ -77,7 +77,7 @@ local app = lua_fsm.create({
         self.data.callbacks = previous_callbacks
       end
 
-      self.data.fsm       = fight_cinematic.create(attacking_unit, target_unit, result, callback)
+      self.data.fsm       = fight_cinematic.create(attacking_unit, target_unit, result, whoami, callback)
       self.data.callbacks = fight_cinematic.callbacks
     end,
 

@@ -207,7 +207,7 @@ function create()
 
 
         on_fight_ended = function(self, event, from, to, attacking_unit, target_unit, result, winner)
-          self.data.app.play_fight_cinematic(self.data.game, attacking_unit, target_unit, result)
+          self.data.app.play_fight_cinematic(self.data.game, attacking_unit, target_unit, result, self.data.whoami)
           game.apply_fight_result(self, result)
 
           if winner then

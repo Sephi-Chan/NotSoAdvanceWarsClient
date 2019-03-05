@@ -1,6 +1,6 @@
 local callbacks = {}
 
-local function create(attacking_unit, target_unit, result, callback)
+local function create(attacking_unit, target_unit, result, whoami, callback)
   return lua_fsm.create({
     initial = "fading",
     events = {
@@ -18,6 +18,8 @@ local function create(attacking_unit, target_unit, result, callback)
     callbacks = {
       on_startup = function(self, event, from, to)
         local is_scrolling     = attacking_unit.unit_type_id ~= "artillery"
+        local success, report = pcall(fight_report, "player_1", attacking_unit, result.attacking_unit, target_unit, result.target_unit)
+
         self.result            = result
         self.callback          = callback
         self.tx                = 0
@@ -27,6 +29,9 @@ local function create(attacking_unit, target_unit, result, callback)
         self.background        = spawn_background(self, self.tx, self.tx, animations.sprites.plain_large, is_scrolling)
         self.waiting_countdown = 0.2
         self.opacity           = 1
+
+        self.title             = fight_title(attacking_unit, target_unit)
+        self.report           = success and report or ""
 
         local attackers_count_to_display_before = math.ceil(5 * attacking_unit.count/10)
         local attackers_count_to_display_after  = math.ceil(5 * result.attacking_unit.count/10)
@@ -85,6 +90,10 @@ local function create(attacking_unit, target_unit, result, callback)
 
         lg.setColor(0, 0, 0)
         lg.rectangle("fill", 398, 0, 4, 600)
+
+        lg.setColor(1, 1, 1)
+        lg.printf(self.title, 20, 75, 760, "center")
+        lg.printf(self.report, 20, 460, 760, "center")
       end,
 
 
@@ -410,6 +419,7 @@ function spawn_target_unit(cinematic, index, target_unit, is_destroyed, attackin
         self.flashing_duration   = 0.02
         self.flashing_countdown  = self.flashing_duration
         self.flashing            = false
+        sound_box.play_sound("submachine_gun", 0.4)
       end,
 
 
@@ -522,6 +532,94 @@ function animate_unit(fsm, delta)
       fsm.frame = 1
     end
   end
+end
+
+
+function fight_title(attacking_unit, target_unit)
+  local attacker_grammar = attacking_unit.count == 1 and "singular" or "plural"
+  local attacker_name    = unit_types[attacking_unit.unit_type_id].fight_title[attacker_grammar]
+  local attacker_title   = attacking_unit.count .. " " .. attacker_name
+
+  local target_grammar = target_unit.count == 1 and "singular" or "plural"
+  local target_name    = unit_types[target_unit.unit_type_id].fight_title[target_grammar]
+  local target_title   = target_unit.count .. " " .. target_name
+
+  return attacker_title .. " VS " .. target_title
+end
+
+
+function fight_report(whoami, attacking_unit_before, attacking_unit_after, target_unit_before, target_unit_after)
+  local attackers_report = nil
+  local targets_report   = nil
+  local attacker_names   = unit_types[attacking_unit_after.unit_type_id].fight_title
+  local attacker_losses  = attacking_unit_before.count - attacking_unit_after.count
+  local target_names     = unit_types[target_unit_after.unit_type_id].fight_title
+  local target_losses    = target_unit_before.count - target_unit_after.count
+
+  -- I'm the attacker commenting about our remaining units.
+  if attacking_unit_after.owner == whoami then
+    if attacking_unit_before.count == attacking_unit_after.count and attacking_unit_before.count == 1 then
+      attackers_report = "Quelle chance ! Notre dernier " .. attacker_names.singular .. " est toujours debout !"
+    elseif attacking_unit_before.count == attacking_unit_after.count then
+      attackers_report = "Hourra ! Nos " .. attacker_names.plural .. " sont tous intacts !"
+    elseif attacking_unit_after.count == 0 and attacking_unit_before.count == 1 then
+      attackers_report = "Notre dernier " .. attacker_names.singular .. " a finalement été détruit..."
+    elseif attacking_unit_after.count == 0 then
+      attackers_report = "Malheur ! Nous avons perdu tous nos " .. attacker_names.plural .. " dans cet assault..."
+    else
+      local name = attacker_names[attacker_losses == 1 and "singular" or "plural"]
+      attackers_report = "Nous avons perdu " .. attacker_losses .. " " .. name .. " dans cet assault..."
+    end
+
+  -- I'm the defender commenting about attacker's remaining units.
+  else
+    if attacking_unit_before.count == attacking_unit_after.count and attacking_unit_before.count == 1 then
+      attackers_report = "Malheur ! Le dernier " .. attacker_names.singular .. " ennemi est toujours intact !"
+    elseif attacking_unit_before.count == attacking_unit_after.count then
+      attackers_report = "Malheur ! Les " .. attacker_names.plural .. " ennemis sont intacts !"
+    elseif attacking_unit_after.count == 0 and attacking_unit_before.count == 1 then
+      attackers_report = "Victoire ! L'ennemi a perdu son dernier " .. attacker_names.singular .. " dans cet assault !"
+    elseif attacking_unit_after.count == 0 then
+      attackers_report = "Victoire ! L'ennemi a perdu tous ses " .. attacker_names.plural .. " dans cet assault !"
+    else
+      local name = attacker_names[attacker_losses == 1 and "singular" or "plural"]
+      attackers_report = "Nous avons détruit " .. attacker_losses .. " " .. name .. " ennemis."
+    end
+  end
+
+
+  -- I'm the attacker commenting about target's remaining units.
+  if attacking_unit_after.owner == whoami then
+    if target_unit_before.count == target_unit_after.count and target_unit_before.count == 1 then
+      targets_report = "Malheur ! Leur dernier " .. target_names.singular .. " est intact ! Qu'il est coriace !"
+    elseif target_unit_before.count == target_unit_after.count then
+      targets_report = "Malheur ! Tous leurs " .. target_names.plural .. " ont résisté à notre assaut !"
+    elseif target_unit_after.count == 0 and target_unit_before.count == 1 then
+      targets_report = "Le dernier " .. target_names.singular .. " a enfin été éliminé !."
+    elseif target_unit_after.count == 0 then
+      targets_report = "Hourra ! Nous avons éliminé tous les " .. target_names.plural .. " !"
+    else
+      local name = target_names[target_losses == 1 and "singular" or "plural"]
+      targets_report = "Nous avons éliminé " .. target_losses .. " " .. name .. " au cours de l'assault !"
+    end
+
+  -- I'm the defender commenting about our remaining units.
+  else
+    if target_unit_before.count == target_unit_after.count and target_unit_before.count == 1 then
+      targets_report = "Ouf ! Notre dernier " .. target_names.singular .. " a tenu bon !"
+    elseif target_unit_before.count == target_unit_after.count then
+      targets_report = "Hourra ! Tous nos " .. target_names.plural .. " sont intacts !"
+    elseif target_unit_after.count == 0 and target_unit_before.count == 1 then
+      targets_report = "Diantre ! L'ennemi a abattu notre dernier " .. target_names.singular .. "..."
+    elseif target_unit_after.count == 0 then
+      targets_report = "Malheur ! L'ennemi a éliminé tous nos " .. target_names.plural .. " !"
+    else
+      local name = target_names[target_losses == 1 and "singular" or "plural"]
+      targets_report = "L'ennemi a réduit " .. target_losses .. " " .. name .. " dans son assault..."
+    end
+  end
+
+  return attackers_report .. "\n" .. targets_report
 end
 
 
