@@ -6,7 +6,7 @@ lg           = love.graphics
 font         = lg.newFont(12); lg.setFont(font)
 arrow_cursor = love.mouse.getSystemCursor("arrow")
 hand_cursor  = love.mouse.getSystemCursor("hand")
-env          = "dev"
+env          = "prod"
 server_ip    = env == "dev" and "192.168.1.12" or "163.172.97.119"
 
 socket     = require("socket")
@@ -30,6 +30,9 @@ error_color = { 1, 0, 0 }
 
 love.filesystem.setIdentity("NotSoAdvanceWars")
 love.window.setTitle("Not so Advance Wars")
+
+math.randomseed(os.time())
+math.random(); math.random(); math.random()
 
 local network = {
   client    = socket.tcp(),
