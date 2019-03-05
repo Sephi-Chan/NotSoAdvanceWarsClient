@@ -18,7 +18,7 @@ local function create(attacking_unit, target_unit, result, whoami, callback)
     callbacks = {
       on_startup = function(self, event, from, to)
         local is_scrolling     = attacking_unit.unit_type_id ~= "artillery"
-        local success, report = pcall(fight_report, "player_1", attacking_unit, result.attacking_unit, target_unit, result.target_unit)
+        local success, report = pcall(fight_report, whoami, attacking_unit, result.attacking_unit, target_unit, result.target_unit)
 
         self.result            = result
         self.callback          = callback
@@ -326,6 +326,7 @@ function spawn_attacking_unit(cinematic, index, attacking_unit, will_explode)
 
 
       on_turn_to_ashes = function(self, event, from, to)
+        self.flashing = false
         self.cinematic.sub_animation_ended(self.id)
       end,
 
@@ -337,6 +338,7 @@ function spawn_attacking_unit(cinematic, index, attacking_unit, will_explode)
 
 
       on_stop = function(self)
+        self.flashing = false
         self.cinematic.sub_animation_ended(self.id)
       end,
 
@@ -419,7 +421,7 @@ function spawn_target_unit(cinematic, index, target_unit, is_destroyed, attackin
         self.flashing_duration   = 0.02
         self.flashing_countdown  = self.flashing_duration
         self.flashing            = false
-        sound_box.play_sound("submachine_gun", 0.4)
+        if self.will_retaliate then sound_box.play_sound("submachine_gun", 0.4) end
       end,
 
 
@@ -477,6 +479,7 @@ function spawn_target_unit(cinematic, index, target_unit, is_destroyed, attackin
 
 
       on_turn_to_ashes = function(self, event, from, to)
+        self.flashing = false
         self.cinematic.sub_animation_ended(self.id)
       end,
 
@@ -615,7 +618,7 @@ function fight_report(whoami, attacking_unit_before, attacking_unit_after, targe
       targets_report = "Malheur ! L'ennemi a éliminé tous nos " .. target_names.plural .. " !"
     else
       local name = target_names[target_losses == 1 and "singular" or "plural"]
-      targets_report = "L'ennemi a réduit " .. target_losses .. " " .. name .. " dans son assault..."
+      targets_report = "L'ennemi a réduit " .. target_losses .. " " .. name .. " en poussières dans son assault..."
     end
   end
 
